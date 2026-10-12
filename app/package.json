@@ -1,0 +1,12 @@
+﻿{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "Powernet IT Service Dashboard",
+  "main": "app.js",
+  "scripts": {
+    "test": "node test/app.test.js",
+    "start": "node app.js"
+  },
+  "license": "ISC",
+  "type": "commonjs"
+}
