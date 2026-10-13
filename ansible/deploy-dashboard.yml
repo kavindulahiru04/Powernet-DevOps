@@ -1,0 +1,15 @@
+---
+- name: Deploy Powernet IT Service Dashboard
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Ensure the dashboard container is running
+      community.docker.docker_container:
+        name: powernet-dashboard-container
+        image: powernet-dashboard:1.0
+        state: started
+        restart_policy: unless-stopped
+        published_ports:
+          - "3000:3000"
