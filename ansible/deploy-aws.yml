@@ -1,0 +1,49 @@
+---
+- name: Deploy Powernet IT Service Dashboard to AWS EC2
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Create the application directory
+      ansible.builtin.file:
+        path: /opt/powernet-dashboard/app
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Copy dashboard application files to EC2
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../app/"
+        dest: /opt/powernet-dashboard/app/
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Build the dashboard Docker image
+      ansible.builtin.command:
+        cmd: docker build -t powernet-dashboard:1.0 /opt/powernet-dashboard/app
+
+    - name: Remove previous cloud container if present
+      ansible.builtin.shell: docker rm -f powernet-dashboard-cloud >/dev/null 2>&1 || true
+      changed_when: true
+
+    - name: Start the dashboard container
+      ansible.builtin.command:
+        cmd: docker run -d --restart unless-stopped --name powernet-dashboard-cloud -p 80:3000 powernet-dashboard:1.0
+
+    - name: Verify HTTP response on EC2
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        method: GET
+        status_code: 200
+        return_content: true
+      register: dashboard_response
+      retries: 12
+      delay: 2
+      until: dashboard_response.status == 200
+
+    - name: Verify dashboard content
+      ansible.builtin.assert:
+        that:
+          - "'Powernet IT Service Dashboard' in dashboard_response.content"
